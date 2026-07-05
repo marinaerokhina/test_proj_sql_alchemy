@@ -64,23 +64,6 @@ cvs (резюме)
 - PostgreSQL 12+
 - Установленный PostgreSQL сервер
 
-### Установка зависимостей
-```bash
-pip install -r requirements.txt
-```
-
-### Настройка .env
-Создайте файл `.env` с переменными:
-```env
-DATABASE_URL_psycopg=postgresql://user:password@localhost:5432/dbname
-DATABASE_URL_asyncpg=postgresql+asyncpg://user:password@localhost:5432/dbname
-```
-
-### Запуск
-```bash
-python -m src.main
-```
-
 ## 💡 Ключевые возможности
 
 ### 1. ORM модели с relationships
