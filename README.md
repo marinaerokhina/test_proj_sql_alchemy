@@ -1,254 +1,93 @@
-# test_proj_sql_alchemy — Изучение SQLAlchemy ORM
+# SQLAlchemy ORM Practice
 
-Учебный проект, созданный по бесплатному видеокурсу SQLAlchemy Артема Шумейко. Демонстрирует работу с реляционными базами данных через ORM SQLAlchemy 2.0, включая синхронный и асинхронный подходы, сложные запросы, relationships и оптимизацию загрузки данных.
+**Python · PostgreSQL · SQLAlchemy 2.x · AsyncIO**
 
-## 🎯 Цель проекта
+A university-level practice repository exploring SQLAlchemy ORM and Core with PostgreSQL. It covers relational models, synchronous and asynchronous sessions, joins, aggregations, CTEs, window functions, and relationship-loading strategies.
 
-Практическое изучение возможностей SQLAlchemy:
-- Создание моделей с relationships (один-ко-многим)
-- Синхронный и асинхронный режимы работы
-- CRUD операции через ORM
-- Сложные SQL-запросы: JOIN, CTE, подзапросы, оконные функции
-- Агрегатные функции и группировка
-- Оптимизация загрузки связанных данных (lazy, joined, selectin)
+> **Learning project:** Based on a free SQLAlchemy video course by Artem Shumeiko. This is an educational code laboratory, not a deployed web service or a production-ready API.
 
-## 📁 Структура проекта
+## Topics explored
 
-```
+| Area | Examples in the repository |
+| --- | --- |
+| Data modeling | `workers` and `cvs` entities, primary/foreign keys, enum types |
+| CRUD | Create, read, update via ORM and SQLAlchemy Core |
+| Advanced queries | JOIN, GROUP BY, HAVING, CTE, window functions |
+| Relationships | One-to-many, lazy loading, joinedload, selectinload |
+| Async database access | `asyncpg` driver, async sessions, `asyncio` |
+| Schema handling | SQLAlchemy metadata-based table creation |
+
+## Technology
+
+- Python 3.10+
+- PostgreSQL
+- SQLAlchemy 2.x
+- psycopg 3 (synchronous connection)
+- asyncpg (asynchronous connection)
+- pydantic-settings (local database configuration)
+
+## Quick start
+
+1. Install Python 3.10+ and PostgreSQL and start the PostgreSQL service.
+2. Create a **local development database** named `sqlalchemy_practice` (or configure a different existing database name).
+3. Clone the repository and create a virtual environment:
+
+   ```bash
+   git clone https://github.com/marinaerokhina/test_proj_sql_alchemy.git
+   cd test_proj_sql_alchemy
+   python -m venv .venv
+   ```
+
+4. Activate the environment: Windows PowerShell `.venv\Scripts\Activate.ps1`, or macOS/Linux `source .venv/bin/activate`.
+5. Install dependencies:
+
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+6. Copy `.env.example` to an untracked `.env` file and enter **your own PostgreSQL password** (do not commit the `.env` file).
+7. Run one command at a time from the repository root:
+
+   ```bash
+   python -m src.main init
+   python -m src.main seed
+   python -m src.main list
+   ```
+
+`init` creates tables if they do not exist; `seed` adds three example workers; `list` prints the workers. Running `seed` again adds additional rows. **These commands do not delete existing tables.**
+
+### Important notes
+
+- This repository is an experiment playground with additional `SyncORM`, `AsyncORM`, `SyncCore`, and `AsyncCore` methods in `src/orm.py` and `src/core.py`. Not all exercises have been exercised together in a clean environment.
+- Never point an educational database experiment at a production database. Some older learning functions depend on sample rows or fixed IDs.
+- A working local PostgreSQL server and appropriate database permissions are necessary.
+- A live integration test has not yet been run after these portfolio updates.
+
+## Structure
+
+```text
 test_proj_sql_alchemy/
 ├── src/
-│   ├── config.py          # Конфигурация подключения к БД
-│   ├── database.py        # Настройка движков и сессий
-│   ├── models.py          # ORM модели (Workers, CV)
-│   ├── orm.py             # CRUD операции и сложные запросы
-│   ├── core.py            # Core-style запросы (альтернативный подход)
-│   └── main.py            # Точка входа
-├── .env                   # Переменные окружения (URL БД)
-└── requirements.txt       # Зависимости
+│   ├── config.py       # Pydantic settings + SQLAlchemy URLs
+│   ├── database.py     # Engines and session factories
+│   ├── models.py       # ORM and Core table definitions
+│   ├── orm.py          # CRUD, relationships, aggregations, windows
+│   ├── core.py         # Core examples, including async variants
+│   └── main.py         # Safe CLI with explicit commands
+├── .env.example        # Template: no actual secrets
+├── .gitignore
+├── requirements.txt
+├── README.md           # English documentation
+└── README_RUS.md       # Original Russian learning notes
 ```
 
-## 🗄 Схема базы данных
+## Further work
 
-Проект использует две связанные таблицы:
+- Add pytest tests with an isolated PostgreSQL database.
+- Improve consistency between ORM and Core learning examples.
+- Expand error handling and check exercises that assume specific row IDs.
+- Add CI and optionally Docker Compose for a disposable local database.
+- Add Alembic migrations when the schema becomes more stable.
 
-```
-workers (работники)
-├── id (PK)
-└── username
-
-cvs (резюме)
-├── id (PK)
-├── title
-├── salary
-├── work_load (enum: part_time, full_time)
-├── worker_id (FK → workers.id, CASCADE)
-├── created_at (server_default: UTC timestamp)
-└── updated_at (server_default + onupdate)
-```
-
-**Связь:** Один работник → много резюме (one-to-many)
-
-## 🛠 Технологии
-
-- **Python 3.10+**
-- **SQLAlchemy 2.0** — ORM и Core
-- **PostgreSQL** — реляционная база данных
-- **psycopg2** — синхронный драйвер
-- **asyncpg** — асинхронный драйвер
-- **asyncio** — асинхронное программирование
-
-## 🚀 Запуск
-
-### Требования
-- Python 3.10+
-- PostgreSQL 12+
-- Установленный PostgreSQL сервер
-
-## 💡 Ключевые возможности
-
-### 1. ORM модели с relationships
-
-```python
-class WorkersOrm(Base):
-    __tablename__ = "workers"
-    id: Mapped[intpk]
-    username: Mapped[str]
-    cvs: Mapped[list["CVOrm"]] = relationship(
-        back_populates="worker"
-    )
-    cvs_part_time: Mapped[list["CVOrm"]] = relationship(
-        back_populates="worker",
-        primaryjoin="and_(WorkersOrm.id == CVOrm.worker_id, CVOrm.work_load = 'part_time')"
-    )
-
-class CVOrm(Base):
-    __tablename__ = "cvs"
-    id: Mapped[intpk]
-    title: Mapped[str_255]
-    salary: Mapped[int|None]
-    work_load: Mapped[WorkLoad]
-    worker_id: Mapped[int] = mapped_column(ForeignKey("workers.id", ondelete="CASCADE"))
-    worker: Mapped["WorkersOrm"] = relationship(back_populates="cvs")
-```
-
-### 2. CRUD операции
-
-**Создание:**
-```python
-with session_factory() as session:
-    worker = WorkersOrm(username="Bobr")
-    session.add(worker)
-    session.commit()
-```
-
-**Чтение:**
-```python
-query = select(WorkersOrm)
-result = session.execute(query)
-workers = result.scalars().all()
-```
-
-**Обновление:**
-```python
-worker = session.get(WorkersOrm, worker_id)
-worker.username = "NewName"
-session.refresh(worker)
-session.commit()
-```
-
-### 3. Сложные запросы с агрегацией
-
-```python
-query = (
-    select(
-        CVOrm.work_load,
-        cast(func.avg(CVOrm.salary), Integer).label("avg_salary"),
-    )
-    .select_from(CVOrm)
-    .filter(and_(
-        CVOrm.title.contains("Python"),
-        CVOrm.salary > 40000,
-    ))
-    .group_by(CVOrm.work_load)
-    .having(cast(func.avg(CVOrm.salary), Integer) > 70000)
-)
-```
-
-### 4. JOIN, CTE, подзапросы и оконные функции
-
-```python
-# Оконная функция для расчета средней зарплаты по workload
-Subq = (
-    select(
-        c, w,
-        func.avg(c.salary).over(partition_by=c.work_load).cast(Integer).label("avg_workload_salary"),
-    )
-    .join(w, c.worker_id == w.id)
-    .subquery("helper1")
-)
-
-# CTE (Common Table Expression)
-cte = (
-    select(
-        Subq.c.worker_id,
-        Subq.c.username,
-        (Subq.c.salary - Subq.c.avg_workload_salary).label("salary_diff")
-    )
-    .cte("helper2")
-)
-
-query = select(cte).order_by(cte.c.salary_diff.desc())
-```
-
-### 5. Оптимизация загрузки relationships
-
-**Lazy loading (по умолчанию):**
-```python
-# Делает N+1 запросов — неэффективно для больших данных
-query = select(WorkersOrm)
-result = session.execute(query).scalars().all()
-w1_cv = result[0].cvs  # Дополнительный запрос при обращении
-```
-
-**Joined loading (JOIN):**
-```python
-# Один большой запрос с JOIN — хорошо для связей many-to-one, one-to-one
-query = (
-    select(WorkersOrm)
-    .options(joinedload(WorkersOrm.cvs))
-)
-result = session.execute(query).unique().scalars().all()
-```
-
-**Selectin loading (подзапрос):**
-```python
-# Два запроса: сначала основные сущности, потом связанные — идеально для one-to-many
-query = (
-    select(WorkersOrm)
-    .options(selectinload(WorkersOrm.cvs))
-)
-result = session.execute(query).unique().scalars().all()
-```
-
-### 6. Асинхронный режим
-
-```python
-class AsyncORM:
-    @staticmethod
-    async def create_tables():
-        async with async_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-    @staticmethod
-    async def insert_data():
-        async with async_session_factory() as session:
-            worker = WorkersOrm(username="Bobr")
-            session.add(worker)
-            await session.commit()
-
-    @staticmethod
-    async def select_workers():
-        async with async_session_factory() as session:
-            query = select(WorkersOrm)
-            result = await session.execute(query)
-            workers = result.scalars().all()
-```
-
-**Важно:** В асинхронном режиме нельзя использовать lazy loading — только joinedload/selectinload.
-
-## 📚 Чему научилась
-
-✅ SQLAlchemy ORM 2.0 (декларативный стиль)  
-✅ Создание моделей с relationships (one-to-many)  
-✅ Синхронный и асинхронный режимы работы  
-✅ CRUD операции через ORM  
-✅ Сложные SQL-запросы: JOIN, CTE, подзапросы  
-✅ Оконные функции (OVER, PARTITION BY)  
-✅ Агрегатные функции: AVG, COUNT, SUM  
-✅ Группировка: GROUP BY, HAVING  
-✅ Оптимизация загрузки: lazy, joined, selectin  
-✅ Работа с enum типами  
-✅ Server-side defaults (TIMEZONE, now())  
-✅ Каскадное удаление (ON DELETE CASCADE)  
-✅ Type annotations для моделей  
-✅ Конфигурация через .env  
-
-## 🔮 Возможные улучшения
-
-- [ ] Добавить миграции через Alembic
-- [ ] Реализовать CRUD API (FastAPI/Flask)
-- [ ] Добавить валидацию данных (Pydantic)
-- [ ] Покрыть тестами (pytest)
-- [ ] Добавить логирование запросов
-- [ ] Реализовать пагинацию
-- [ ] Добавить кэширование
-- [ ] Docker-контейнеризация
-
-## 📝 Примечание
-
-Проект создан в учебных целях для изучения SQLAlchemy. Код содержит подробные комментарии, объясняющие каждый аспект работы с ORM.
-
----
-
-**Автор:** Марина Ерохина  
-**Источник:** Видеокурс SQLAlchemy Артема Шумейко (Rutube)
+**Author:** Marina Erokhina  
+**Course reference:** SQLAlchemy video tutorial by Artem Shumeiko (Rutube).
