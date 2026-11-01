@@ -1,13 +1,12 @@
 from sqlalchemy import text, insert, select, func, cast, Integer, and_
 from sqlalchemy.orm import aliased, joinedload, selectinload
 from src.database import sync_engine, async_engine, session_factory, async_session_factory, Base
-from models import WorkersOrm, CVOrm, WorkLoad  # metadata_obj,
+from src.models import WorkersOrm, CVOrm, WorkLoad  # metadata_obj,
 
 class SyncORM:
     @staticmethod
     def create_tables():
         sync_engine.echo = False
-        Base.metadata.drop_all(sync_engine)
         Base.metadata.create_all(sync_engine)
         sync_engine.echo = True
 
@@ -43,7 +42,8 @@ class SyncORM:
             worker = session.get(WorkersOrm, worker_id)
             worker.username = new_username
             #session.expire(worker) # или expire_all() - отменяет все изменения объекта, запрос в базу не отправляет, СИНХРОННАЯ ОПЕРАЦИЯ
-            session.refresh(worker) # - обновление данных из бд в случае их изменения по сравнению с предыдущим их запросом
+            session.flush()
+            session.refresh(worker) # Read the flushed value from the database
             session.commit()
             # минус такого подхода - больше запросов к базе, чем в core-стиле. В core - 1 запрос, здесь - 2 запроса
 
@@ -81,7 +81,7 @@ class SyncORM:
             print(query.compile(compile_kwargs={"literal_binds": True}))
             result = session.execute(query)
             res = result.all()
-            print(res, res[0].avg_salary)
+            print(res)
 
 
     @staticmethod
@@ -123,7 +123,7 @@ class SyncORM:
                     Subq.c.salary,
                     Subq.c.work_load,
                     Subq.c.avg_workload_salary,
-                    (Subq.c.salary - Subq.c.avg_workload_compensation).label("salary_diff")
+                    (Subq.c.salary - Subq.c.avg_workload_salary).label("salary_diff")
                 )
                 .cte("helper2")
             )
@@ -158,7 +158,7 @@ class SyncORM:
         with session_factory() as session:
             query = (
                 select(WorkersOrm)
-                .option(joinedload(WorkersOrm.cvs)) # join резюме сразу - один огромный запрос со всеми данными
+                .options(joinedload(WorkersOrm.cvs)) # join резюме сразу - один огромный запрос со всеми данными
             )
             # и никаких доп запросов после этого - вся информация уже подгружена
             # оптимизация времени работы, каналов доступа
@@ -178,7 +178,7 @@ class SyncORM:
         with session_factory() as session:
             query = (
                 select(WorkersOrm)
-                .option(selectinload(WorkersOrm.cvs))
+                .options(selectinload(WorkersOrm.cvs))
             )
             # метод сначала выбрал всех существующих работников, а потом подгрузил только их резюме
             # при параметризованном выборе (т.е. выбираются не все строки, а часть по определенным критериям),
@@ -200,7 +200,6 @@ class AsyncORM:
     @staticmethod
     async def create_tables():
         async with async_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
 
 
