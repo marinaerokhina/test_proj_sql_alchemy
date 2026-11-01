@@ -51,7 +51,8 @@ class WorkersOrm(Base):
 
     cvs_part_time: Mapped[list["CVOrm"]] = relationship(
         back_populates="worker",
-        primaryjoin="and_(WorkersOrm.id == CVOrm.worker_id, CVOrm.work_load = 'part_time')"
+        primaryjoin="and_(WorkersOrm.id == CVOrm.worker_id, CVOrm.work_load == 'part_time')",
+        viewonly=True,  # Filtered relationship; managed through WorkersOrm.cvs
         # join для упрощенной выборки через отношения
     )
 
