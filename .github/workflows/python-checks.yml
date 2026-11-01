@@ -1,0 +1,46 @@
+name: Python checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-local-test-only
+          POSTGRES_DB: sqlalchemy_practice
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sqlalchemy_practice"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASS: ci-local-test-only
+      DB_NAME: sqlalchemy_practice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile Python sources
+        run: python -m compileall -q src
+      - name: Verify module imports
+        run: |
+          python -c "from src.config import settings; from src.orm import SyncORM, AsyncORM; from src.core import SyncCore, AsyncCore; from src.main import main; print('Imports OK')"
+      - name: PostgreSQL CLI smoke test
+        run: |
+          python -m src.main init
+          python -m src.main seed
+          python -m src.main list

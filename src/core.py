@@ -22,7 +22,6 @@ class SyncCore:
     @staticmethod
     def create_tables():
         sync_engine.echo = False
-        metadata_obj.drop_all(sync_engine)
         metadata_obj.create_all(sync_engine)
         sync_engine.echo = True
 
@@ -37,8 +36,8 @@ class SyncCore:
          # через query builder
             statement = insert(workers_table).values(
                 [
-                    {"name": "AO Bobr"},
-                    {"name": "OOO Volk"}
+                    {"username": "AO Bobr"},
+                    {"username": "OOO Volk"}
                 ]
             )
             conn.execute(statement)
@@ -75,7 +74,6 @@ class AsyncCore:
     @staticmethod
     async def create_tables():
         async with async_engine.begin() as conn:
-            await conn.run_sync(metadata_obj.drop_all)
             await conn.run_sync(metadata_obj.create_all)
 
 

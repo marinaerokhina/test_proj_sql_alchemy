@@ -1,15 +1,28 @@
-# from src.core import create_tables, insert_data
-# import asyncio
+"""Command-line entry point for safe, explicit learning exercises."""
+import argparse
 
-from src.orm import SyncORM, AsyncORM
-from src.core import SyncCore, AsyncCore
+from src.orm import SyncORM
 
-SyncORM.create_tables()
-SyncORM.insert_data()
-SyncORM.select_workers()
-SyncORM.update_workers()
-#asyncio.run(insert_data())
-#SyncCore.create_tables()
-#SyncCore.insert_data()
-#SyncCore.select_workers()
-#SyncCore.update_workers()
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="SQLAlchemy practice with a local PostgreSQL database."
+    )
+    parser.add_argument(
+        "command", choices=["init", "seed", "list"],
+        help="init: create tables; seed: add sample workers; list: print workers",
+    )
+    args = parser.parse_args()
+
+    if args.command == "init":
+        SyncORM.create_tables()
+        print("Schema initialized (existing tables preserved).")
+    elif args.command == "seed":
+        SyncORM.insert_data()
+        print("Sample workers inserted.")
+    elif args.command == "list":
+        SyncORM.select_workers()
+
+
+if __name__ == "__main__":
+    main()
