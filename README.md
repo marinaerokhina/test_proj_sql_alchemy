@@ -26,42 +26,20 @@ A university-level practice repository exploring SQLAlchemy ORM and Core with Po
 - asyncpg (asynchronous connection)
 - pydantic-settings (local database configuration)
 
-## Quick start
+## Run locally
 
-1. Install Python 3.10+ and PostgreSQL and start the PostgreSQL service.
-2. Create a **local development database** named `sqlalchemy_practice` (or configure a different existing database name).
-3. Clone the repository and create a virtual environment:
+Requires **Python 3.10+**, PostgreSQL, and a local database named `sqlalchemy_practice`. Copy `.env.example` to `.env` and set your database credentials.
 
-   ```bash
-   git clone https://github.com/marinaerokhina/test_proj_sql_alchemy.git
-   cd test_proj_sql_alchemy
-   python -m venv .venv
-   ```
+From the project root:
 
-4. Activate the environment: Windows PowerShell `.venv\Scripts\Activate.ps1`, or macOS/Linux `source .venv/bin/activate`.
-5. Install dependencies:
+```bash
+pip install -r requirements.txt
+python -m src.main init
+python -m src.main seed
+python -m src.main list
+```
 
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-
-6. Copy `.env.example` to an untracked `.env` file and enter **your own PostgreSQL password** (do not commit the `.env` file).
-7. Run one command at a time from the repository root:
-
-   ```bash
-   python -m src.main init
-   python -m src.main seed
-   python -m src.main list
-   ```
-
-`init` creates tables if they do not exist; `seed` adds three example workers; `list` prints the workers. Running `seed` again adds additional rows. **These commands do not delete existing tables.**
-
-### Important notes
-
-- This repository is an experiment playground with additional `SyncORM`, `AsyncORM`, `SyncCore`, and `AsyncCore` methods in `src/orm.py` and `src/core.py`. Not all exercises have been exercised together in a clean environment.
-- Never point an educational database experiment at a production database. Some older learning functions depend on sample rows or fixed IDs.
-- A working local PostgreSQL server and appropriate database permissions are necessary.
-- A live integration test has not yet been run after these portfolio updates.
+These commands create the tables, add sample workers, and display them. The basic workflow is tested with PostgreSQL in GitHub Actions. Other learning exercises in `src/orm.py` and `src/core.py` are examples, not a finished application.
 
 ## Structure
 
